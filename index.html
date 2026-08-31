@@ -8,7 +8,7 @@
   <button class="btn" onclick="openEventSheet()" data-t="newEvent">＋ 新增 Event</button>
 </div>
 <div id="eventView" class="hidden">
-  <div class="top"><div><button class="backbtn" onclick="backToEvents()">‹ <span data-t="events">Events</span></button><h1 id="eventTitle" style="margin-top:4px"></h1><div class="tiny" id="eventDate"></div></div><div style="display:flex;gap:6px"><select id="currencySelect" class="pill" onchange="changeCurrency()" style="padding-right:8px"><option value="CAD">CAD</option><option value="JPY">JPY</option><option value="HKD">HKD</option><option value="USD">USD</option></select><button class="pill" onclick="toggleLang()">EN / 中</button></div></div>
+  <div class="top"><div><button class="backbtn" onclick="backToEvents()">‹ <span data-t="events">Events</span></button><div style="display:flex;align-items:center;gap:8px;margin-top:4px"><h1 id="eventTitle"></h1><button class="ghost" onclick="openEventManage()" id="editEventBtn" style="padding:6px 9px">編輯</button></div><div class="tiny" id="eventDate"></div></div><div style="display:flex;gap:6px"><select id="currencySelect" class="pill" onchange="changeCurrency()" style="padding-right:8px"><option value="CAD">CAD</option><option value="JPY">JPY</option><option value="HKD">HKD</option><option value="USD">USD</option></select><button class="pill" onclick="toggleLang()">EN / 中</button></div></div>
   <div class="card hero"><small data-t="balance">你的結餘</small><div class="amount" id="net">$0</div><div class="row"><div class="stat"><small data-t="owed">其他人欠你</small><b id="owed">$0</b></div><div class="stat"><small data-t="owe">你欠其他人</small><b id="owe">$0</b></div></div></div>
   <div class="card"><div class="headrow"><b data-t="members">成員</b><button class="ghost" onclick="openMember()" data-t="addMember">＋ 加人</button></div><div class="field" style="margin:12px 0 4px"><label id="meLabel">我係</label><select id="meSelect" onchange="changeMe()"></select></div><div class="people" id="people"></div></div>
   <div class="card" onclick="openSettlementSheet()" style="cursor:pointer"><div class="headrow"><b data-t="settle">最佳清數方案</b><span>›</span></div><div id="settlements" class="tiny" style="margin-top:10px"></div></div>
@@ -16,7 +16,18 @@
   <button class="btn" onclick="openExpense()" data-t="addExpense">＋ 新增支出</button>
 </div></div>
 <div class="sheet" id="eventSheet"><div class="panel"><h2 data-t="newEventTitle">新增 Event</h2><div class="field"><label><span data-t="eventName">Event 名稱</span> <span class="req">*</span></label><input id="eventName" placeholder="Botanist Brunch"></div><div class="field"><label data-t="date">日期</label><input id="eventDateInput" type="date"></div><div class="field"><label data-t="currency">貨幣</label><select id="eventCurrency"><option>CAD</option><option>JPY</option><option>HKD</option><option>USD</option></select></div><div id="eventFormError" class="tiny" style="display:none;color:#c62828;margin-top:8px"></div><div class="actions"><button onclick="closeEventSheet()" data-t="cancel">取消</button><button class="primary" onclick="createFriendSplitEvent()" data-t="create">建立</button></div></div></div>
-<div class="sheet" id="memberSheet"><div class="panel"><h2 data-t="addMemberTitle">新增成員</h2><div class="field"><label data-t="name">名稱</label><input id="memberName" placeholder="May"></div><div class="actions"><button onclick="closeMember()" data-t="cancel">取消</button><button class="primary" onclick="addMember()" data-t="add">加入</button></div></div></div><div class="sheet" id="memberDetailSheet"><div class="panel"><h2 id="memberDetailName">成員</h2><div class="card" style="margin:14px 0 0"><b id="memberDebtTitle">欠款明細</b><div id="memberDebtDetails" class="tiny" style="margin-top:10px"></div></div><div class="actions"><button class="primary" onclick="closeMemberDetail()">完成</button></div></div></div>
+<div class="sheet" id="eventManageSheet"><div class="panel">
+<h2 id="eventManageTitle">編輯 Event</h2>
+<div class="field"><label id="eventManageNameLabel">Event 名稱</label><input id="eventManageName"></div>
+<div class="field"><label id="eventManageDateLabel">日期</label><input id="eventManageDate" type="date"></div>
+<div class="field"><label id="eventManageCurrencyLabel">貨幣</label><select id="eventManageCurrency"><option>CAD</option><option>JPY</option><option>HKD</option><option>USD</option></select></div>
+<div class="actions"><button onclick="closeEventManage()" id="eventManageCancel">取消</button><button class="primary" onclick="saveEventManage()" id="eventManageSave">儲存</button></div>
+<button onclick="deleteCurrentEvent()" id="deleteEventBtn" style="width:100%;margin-top:12px;padding:13px;border-radius:12px;border:1px solid #c62828;background:white;color:#c62828;font-weight:650">刪除 Event</button>
+</div></div><div class="sheet" id="memberSheet"><div class="panel"><h2 data-t="addMemberTitle">新增成員</h2><div class="field"><label data-t="name">名稱</label><input id="memberName" placeholder="May"></div><div class="actions"><button onclick="closeMember()" data-t="cancel">取消</button><button class="primary" onclick="addMember()" data-t="add">加入</button></div></div></div><div class="sheet" id="memberDetailSheet"><div class="panel"><h2 id="memberDetailName">成員</h2>
+<div class="field"><label id="memberRenameLabel">名稱</label><input id="memberRenameInput"></div>
+<div class="actions" style="margin-top:8px"><button onclick="renameCurrentMember()" id="memberRenameBtn">重新命名</button><button onclick="removeCurrentMember()" id="memberRemoveBtn" style="color:#c62828">移除成員</button></div>
+<div class="card" style="margin:14px 0 0"><b id="memberDebtTitle">欠款明細</b><div id="memberDebtDetails" class="tiny" style="margin-top:10px"></div></div>
+<div class="actions"><button class="primary" onclick="closeMemberDetail()" id="memberDoneBtn">完成</button></div></div></div>
 <div class="sheet" id="settlementSheet"><div class="panel"><h2 id="settlementSheetTitle">最佳清數方案</h2><div class="seg" style="margin-top:12px"><button id="settleIndividualBtn" class="active" onclick="setSettlementMode('individual')">個人</button><button id="settleGroupBtn" onclick="setSettlementMode('group')">合併清數</button></div><div id="groupSettlementControls" class="hidden" style="margin-top:14px"><div class="card" style="margin:0 0 12px"><b id="groupSetupTitle">建立清數 Group</b><div id="groupMemberChoices" class="checks" style="margin-top:10px"></div><button class="ghost" style="margin-top:10px" onclick="createSettlementGroup()" id="createGroupBtn">＋ 建立 Group</button></div><div id="savedSettlementGroups"></div></div><div class="card" style="margin:12px 0 0"><b id="settlementResultTitle">個人最佳清數方案</b><div id="settlementSheetResults" class="tiny" style="margin-top:10px"></div></div><div class="actions"><button class="primary" onclick="closeSettlementSheet()" id="settlementDoneBtn">完成</button></div></div></div><div class="sheet" id="expenseSheet"><div class="panel"><h2 data-t="newExpense">新增支出</h2><div class="field"><label><span data-t="description">項目</span> <span class="req">*</span></label><input id="desc" placeholder="Dinner / 晚餐"></div><div class="field"><label data-t="expenseType">支出類型</label><select id="expenseType" onchange="expenseTypeChanged()"><option value="dining" data-t="dining">餐廳</option><option value="groceries" data-t="groceries">雜貨 / 超市</option><option value="shopping" data-t="shopping">購物</option><option value="custom" data-t="customType">自訂</option></select></div><div class="field"><label><span data-t="subtotal">小計</span> <span class="req" id="subtotalReq">*</span></label><input id="subtotal" type="number" inputmode="decimal" placeholder="0" oninput="preview()"></div><div class="field"><label><span data-t="paidBy">邊個付款？</span> <span class="req">*</span></label><select id="payer"></select></div><div class="field"><label><span data-t="participants">邊啲人有份？</span> <span class="req">*</span></label><div id="participantChecks" class="checks"></div></div><div class="field"><label data-t="splitMethod">分攤方法</label><div class="seg"><button id="equalBtn" class="on" onclick="setMode('equal')" data-t="equal">平均</button><button id="customBtn" onclick="setMode('custom')" data-t="custom">自訂</button><button id="itemBtn" onclick="setMode('item')" data-t="itemized">逐項</button></div></div><div id="customArea" class="hidden"><div class="label" data-t="customHint">輸入每人未連稅/小費金額</div><div id="customInputs"></div></div><div id="itemArea" class="hidden"><div class="label" data-t="itemHint">逐個 item 輸入價錢、邊個有份及額外稅</div><div class="field"><label data-t="receiptSubtotal">Receipt 小計（可選，用作核對）</label><input id="receiptSubtotal" type="number" inputmode="decimal" step="0.01" placeholder="156.00" oninput="preview()"><div class="subnote" data-t="itemSubtotalHint">逐項模式嘅小計會由 items 自動加總，唔需要先輸入上面嘅小計。</div></div><div id="itemRows"></div><button class="linkbtn" onclick="addItem()" data-t="addItem">＋ 加 item</button><div class="mutedbox"><b data-t="taxRules">額外稅類別</b><div class="tiny" data-t="taxRulesHint">基本稅會自動套用。呢度只加 Liquor Tax 等額外稅。</div><div id="taxRules"></div><button class="linkbtn" onclick="addTaxRule()" data-t="addTaxRule">＋ 加稅類別</button><div id="taxOverrides"></div></div></div><div class="field"><label data-t="baseTax">基本稅</label><div class="seg"><button id="taxRateBtn" class="on" onclick="setChargeMode('tax','rate')" data-t="rate">%</button><button id="taxAmountBtn" onclick="setChargeMode('tax','amount')" data-t="amount">金額</button></div><input id="tax" type="number" inputmode="decimal" value="5" oninput="recompute()" style="margin-top:8px"><div id="itemTaxMeta" class="taxmeta hidden"><label class="tiny" data-t="actualBaseTax">Receipt 基本稅實際金額（可選）</label><input id="baseTaxOverride" class="mini" type="number" inputmode="decimal" placeholder="auto" oninput="recompute()" style="margin-top:5px"><label class="tiny" data-t="receiptTaxTotal" style="margin-top:8px;display:block">Receipt 稅項總額（可選，用作核對）</label><input id="receiptTaxTotal" class="mini" type="number" inputmode="decimal" placeholder="14.60" oninput="preview()" style="margin-top:5px"></div></div><div class="field"><label data-t="tip">小費</label><div class="seg"><button id="tipRateBtn" class="on" onclick="setChargeMode('tip','rate')" data-t="rate">%</button><button id="tipAmountBtn" onclick="setChargeMode('tip','amount')" data-t="amount">金額</button></div><input id="tip" type="number" inputmode="decimal" value="0" oninput="preview()" style="margin-top:8px"></div><div class="field"><label data-t="paidTotal">實際付款總額（可選）</label><input id="paidTotal" type="number" inputmode="decimal" placeholder="235.46" oninput="matchTotal()"><div class="tiny" data-t="matchHint" style="margin-top:5px">如輸入，會自動反算小費金額，方便對返信用卡總數。</div></div><div class="summary" id="preview"></div><div class="validation-note" id="requiredHint"></div><button id="deleteExpenseBtn" class="actions deleteBtn" style="width:100%;padding:12px;border-radius:12px;margin-top:12px" onclick="deleteExpense()" data-t="deleteExpense">刪除此支出</button><div class="actions"><button onclick="closeExpense()" data-t="cancel">取消</button><button id="saveExpenseBtn" class="primary" onclick="saveExpense()" data-t="save">儲存</button></div></div></div>
 <script>
 const KEY='friendsplit-v02';
@@ -50,7 +61,7 @@ function renderEvents(){let list=$('eventList');if(!state.events.length){list.in
 function formatMoney(n,c){n=Number(n)||0;try{return new Intl.NumberFormat(lang==='zh'?'zh-HK':'en-CA',{style:'currency',currency:c||'CAD',minimumFractionDigits:c==='JPY'?0:2,maximumFractionDigits:c==='JPY'?0:2}).format(n)}catch{return n.toFixed(2)}}
 function openEvent(id){currentEventId=id;state.currentEventId=id;persist();$('eventsView').classList.add('hidden');$('eventView').classList.remove('hidden');renderEvent()}
 function backToEvents(){currentEventId=null;state.currentEventId=null;persist();$('eventView').classList.add('hidden');$('eventsView').classList.remove('hidden');renderEvents()}
-function renderEvent(){let e=currentEvent();if(!e)return;$('eventTitle').textContent=e.name;$('eventDate').textContent=e.date||'';$('currencySelect').value=e.currency;
+function renderEvent(){let e=currentEvent();if(!e)return;$('eventTitle').textContent=e.name;$('eventDate').textContent=e.date||'';$('currencySelect').value=e.currency;$('editEventBtn').textContent=lang==='zh'?'編輯':'Edit';
 if(!e.me||!e.members.includes(e.me))e.me=e.members[0]||'';
 $('meLabel').textContent=lang==='zh'?'我係':'I am';
 $('meSelect').innerHTML=e.members.map(n=>`<option value="${escapeAttr(n)}">${escapeHtml(n)}</option>`).join('');
@@ -58,10 +69,17 @@ $('meSelect').value=e.me||'';
 $('people').innerHTML=e.members.map(n=>`<button class="avatar" style="${n===e.me?'outline:3px solid #111;outline-offset:2px':''}" title="${escapeAttr(n)}" onclick="openMemberDetail(decodeURIComponent('${encodeURIComponent(n)}'))">${initials(n)}</button>`).join('');let ex=$('expenses');ex.innerHTML=e.expenses.length?e.expenses.slice().reverse().map(x=>`<div class="expense" onclick="editExpense(${x.id})"><div><b>${escapeHtml(x.desc)}</b><small>${escapeHtml(x.payer)} ${tr('paid')} · ${x.participants.length} ${tr('people')}</small></div><div class="money"><span>${money(x.total)}</span><small>Tax ${money(x.taxAmt ?? x.subtotal*(x.tax||0)/100)} · Tip ${money(x.tipAmt ?? x.subtotal*(x.tip||0)/100)}</small></div></div>`).join(''):`<div class="tiny" style="padding-top:12px">${tr('none')}<br>${tr('editHint')}</div>`;renderBalances()}
 function changeMe(){let e=currentEvent();if(!e)return;e.me=$('meSelect').value;persist();renderEvent()}
 function balances(){let e=currentEvent();if(!e)return{};let b=Object.fromEntries(e.members.map(m=>[m,0]));e.expenses.forEach(x=>{if(!(x.payer in b))b[x.payer]=0;b[x.payer]+=x.total;x.shares.forEach(sh=>{if(!(sh.name in b))b[sh.name]=0;b[sh.name]-=sh.amount})});return b}
+let selectedMemberName=null;
 function openMemberDetail(name){
-  let e=currentEvent();if(!e)return;
+  let e=currentEvent();if(!e)return;selectedMemberName=name;
+  let zh=lang==='zh';
   $('memberDetailName').textContent=name;
-  $('memberDebtTitle').textContent=lang==='zh'?'欠款明細':'Debt details';
+  $('memberRenameLabel').textContent=zh?'名稱':'Name';
+  $('memberRenameInput').value=name;
+  $('memberRenameBtn').textContent=zh?'重新命名':'Rename';
+  $('memberRemoveBtn').textContent=zh?'移除成員':'Remove member';
+  $('memberDoneBtn').textContent=zh?'完成':'Done';
+  $('memberDebtTitle').textContent=zh?'欠款明細':'Debt details';
   let rows=[];
   (e.expenses||[]).forEach(x=>{
     (x.shares||[]).forEach(sh=>{
@@ -75,13 +93,41 @@ function openMemberDetail(name){
     });
   });
   let b=balances(),v=Number(b[name])||0;
-  let summary=lang==='zh'
-    ? `<div style="margin-bottom:12px"><b>淨結餘：${v>=0?'+ ':'- '}${money(Math.abs(v))}</b></div>`
-    : `<div style="margin-bottom:12px"><b>Net balance: ${v>=0?'+ ':'- '}${money(Math.abs(v))}</b></div>`;
-  $('memberDebtDetails').innerHTML=summary+(rows.length?rows.join(''):(lang==='zh'?'暫時未有欠款明細':'No debt details yet'));
+  let summary=zh?`<div style="margin-bottom:12px"><b>淨結餘：${v>=0?'+ ':'- '}${money(Math.abs(v))}</b></div>`:`<div style="margin-bottom:12px"><b>Net balance: ${v>=0?'+ ':'- '}${money(Math.abs(v))}</b></div>`;
+  $('memberDebtDetails').innerHTML=summary+(rows.length?rows.join(''):(zh?'暫時未有欠款明細':'No debt details yet'));
   $('memberDetailSheet').style.display='flex';
 }
-function closeMemberDetail(){$('memberDetailSheet').style.display='none'}
+function closeMemberDetail(){$('memberDetailSheet').style.display='none';selectedMemberName=null}
+function renameCurrentMember(){
+  let e=currentEvent();if(!e||!selectedMemberName)return;
+  let old=selectedMemberName,n=$('memberRenameInput').value.trim();
+  if(!n){alert(lang==='zh'?'名稱不可留空。':'Name cannot be blank.');return}
+  if(n!==old&&e.members.includes(n)){alert(lang==='zh'?'已經有同名成員。':'A member with that name already exists.');return}
+  if(n===old)return;
+  e.members=e.members.map(x=>x===old?n:x);
+  if(e.me===old)e.me=n;
+  (e.expenses||[]).forEach(x=>{
+    if(x.payer===old)x.payer=n;
+    if(Array.isArray(x.participants))x.participants=x.participants.map(a=>a===old?n:a);
+    if(Array.isArray(x.shares))x.shares.forEach(sh=>{if(sh.name===old)sh.name=n});
+    if(Array.isArray(x.baseShares))x.baseShares.forEach(sh=>{if(sh.name===old)sh.name=n});
+    if(Array.isArray(x.items))x.items.forEach(it=>{if(Array.isArray(it.people))it.people=it.people.map(a=>a===old?n:a)});
+  });
+  (e.settlementGroups||[]).forEach(g=>{g.members=(g.members||[]).map(a=>a===old?n:a)});
+  selectedMemberName=n;persist();renderEvent();openMemberDetail(n);
+}
+function removeCurrentMember(){
+  let e=currentEvent();if(!e||!selectedMemberName)return;let n=selectedMemberName;
+  if(e.members.length<=1){alert(lang==='zh'?'Event 最少要保留一位成員。':'An event must keep at least one member.');return}
+  let used=(e.expenses||[]).some(x=>x.payer===n||(x.participants||[]).includes(n)||(x.shares||[]).some(sh=>sh.name===n));
+  if(used){alert(lang==='zh'?'呢位成員已經出現喺支出記錄。請先編輯／刪除相關支出，再移除成員。':'This member is used in existing expenses. Edit or delete those expenses first, then remove the member.');return}
+  if(!confirm(lang==='zh'?`確定移除 ${n}？`:`Remove ${n}?`))return;
+  e.members=e.members.filter(x=>x!==n);
+  if(e.me===n)e.me=e.members[0]||'';
+  (e.settlementGroups||[]).forEach(g=>{g.members=(g.members||[]).filter(a=>a!==n)});
+  e.settlementGroups=(e.settlementGroups||[]).filter(g=>(g.members||[]).length>=2);
+  persist();closeMemberDetail();renderEvent();
+}
 let settlementMode='individual';
 function openSettlementSheet(){settlementMode='individual';$('settlementSheet').style.display='flex';renderSettlementSheet()}
 function closeSettlementSheet(){$('settlementSheet').style.display='none'}
@@ -94,6 +140,37 @@ function renderSettlementSheet(){let e=currentEvent();if(!e)return;let zh=lang==
 function createSettlementGroup(){let e=currentEvent();if(!e)return;let picked=[...document.querySelectorAll('.settle-group-choice:checked')].map(x=>x.value);if(picked.length<2){alert(lang==='zh'?'請最少揀 2 位成員。':'Choose at least 2 members.');return}e.settlementGroups=e.settlementGroups||[];e.settlementGroups.push({members:picked});persist();renderSettlementSheet()}
 function removeSettlementGroup(i){let e=currentEvent();if(!e)return;e.settlementGroups=e.settlementGroups||[];e.settlementGroups.splice(i,1);persist();renderSettlementSheet()}
 function renderBalances(){let e=currentEvent();if(!e)return;let b=balances(),me=(e.me&&e.members.includes(e.me))?e.me:e.members[0],v=b[me]||0;$('net').textContent=(v>=0?'+ ':'- ')+money(Math.abs(v));$('owed').textContent=money(Math.max(v,0));$('owe').textContent=money(Math.max(-v,0));renderSettlementRows(individualSettlementRows(),$('settlements'))}
+
+function openEventManage(){
+  let e=currentEvent();if(!e)return;let zh=lang==='zh';
+  $('eventManageTitle').textContent=zh?'編輯 Event':'Edit event';
+  $('eventManageNameLabel').textContent=zh?'Event 名稱':'Event name';
+  $('eventManageDateLabel').textContent=zh?'日期':'Date';
+  $('eventManageCurrencyLabel').textContent=zh?'貨幣':'Currency';
+  $('eventManageCancel').textContent=zh?'取消':'Cancel';
+  $('eventManageSave').textContent=zh?'儲存':'Save';
+  $('deleteEventBtn').textContent=zh?'刪除 Event':'Delete event';
+  $('eventManageName').value=e.name||'';
+  $('eventManageDate').value=e.date||'';
+  $('eventManageCurrency').value=e.currency||'CAD';
+  $('eventManageSheet').style.display='flex';
+}
+function closeEventManage(){$('eventManageSheet').style.display='none'}
+function saveEventManage(){
+  let e=currentEvent();if(!e)return;
+  let name=$('eventManageName').value.trim();
+  if(!name){alert(lang==='zh'?'請輸入 Event 名稱。':'Please enter an event name.');return}
+  e.name=name;e.date=$('eventManageDate').value||'';e.currency=$('eventManageCurrency').value||'CAD';
+  persist();closeEventManage();renderEvent();
+}
+function deleteCurrentEvent(){
+  let e=currentEvent();if(!e)return;
+  let msg=lang==='zh'?`確定刪除「${e.name}」？所有支出同設定都會一併刪除。`:`Delete "${e.name}"? All expenses and settings in this event will be deleted.`;
+  if(!confirm(msg))return;
+  state.events=state.events.filter(x=>x.id!==e.id);
+  currentEventId=null;state.currentEventId=null;persist();closeEventManage();
+  $('eventView').classList.add('hidden');$('eventsView').classList.remove('hidden');renderEvents();
+}
 function changeCurrency(){let e=currentEvent();if(!e)return;e.currency=$('currencySelect').value;persist();renderEvent();preview()}
 function openEventSheet(){
   $('eventName').value='';
