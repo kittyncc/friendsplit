@@ -56,7 +56,7 @@ function persist(){
 }
 function initials(n){return n.trim().split(/\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase()}
 function num(id){return parseFloat($(id).value)||0}
-function render(){document.querySelectorAll('[data-t]').forEach(x=>x.textContent=tr(x.dataset.t));renderEvents();if(currentEventId)renderEvent()}
+function render(){document.querySelectorAll('[data-t]').forEach(x=>x.textContent=tr(x.dataset.t));if($('joinEventHomeBtn'))$('joinEventHomeBtn').textContent=lang==='zh'?'輸入邀請碼加入 Event':'Join event with invite code';renderEvents();if(currentEventId)renderEvent()}
 function renderEvents(){let list=$('eventList');if(!state.events.length){list.innerHTML=`<div class="card empty">${tr('noEvents')}</div>`;return}list.innerHTML=state.events.slice().reverse().map(e=>{let total=(e.expenses||[]).reduce((a,x)=>a+(Number(x.total)||0),0);return `<div class="card event-card" onclick="openEvent(${e.id})"><div class="headrow"><div><div class="event-title">${escapeHtml(e.name)}</div><div class="event-meta">${e.date?escapeHtml(e.date)+' · ':''}${e.members.length} ${tr('eventMembers')} · ${(e.expenses||[]).length} ${tr('eventExpenses')}</div></div><div class="event-total">${formatMoney(total,e.currency)}</div></div></div>`}).join('')}
 function formatMoney(n,c){n=Number(n)||0;try{return new Intl.NumberFormat(lang==='zh'?'zh-HK':'en-CA',{style:'currency',currency:c||'CAD',minimumFractionDigits:c==='JPY'?0:2,maximumFractionDigits:c==='JPY'?0:2}).format(n)}catch{return n.toFixed(2)}}
 function openEvent(id){currentEventId=id;state.currentEventId=id;persist();$('eventsView').classList.add('hidden');$('eventView').classList.remove('hidden');renderEvent()}
