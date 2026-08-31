@@ -3,7 +3,7 @@
 .event-card{cursor:pointer}.event-card:active{opacity:.65}.event-title{font-size:18px;font-weight:750}.event-meta{font-size:12px;color:#777;margin-top:5px}.backbtn{border:0;background:transparent;font-size:16px;padding:6px 0}.event-actions{display:flex;gap:8px}.event-actions button{border:0;background:#eee;border-radius:12px;padding:9px 11px}.empty{padding:20px 0;text-align:center;color:#777}.event-total{font-weight:700;font-size:17px}
 </style></head><body><div class="app">
 <div id="eventsView">
-  <div class="top"><div><h1 data-t="events">Events</h1><div class="tiny" style="margin-top:3px">FriendSplit v0.13.3</div></div><button class="pill" onclick="toggleLang()">EN / 中</button></div>
+  <div class="top"><div><h1 data-t="events">Events</h1><div class="tiny" style="margin-top:3px">FriendSplit v0.13.4</div></div><button class="pill" onclick="toggleLang()">EN / 中</button></div>
   <div id="eventList"></div>
   <button class="btn" onclick="openEventSheet()" data-t="newEvent">＋ 新增 Event</button><button class="ghost" onclick="openJoinSheet()" id="joinEventHomeBtn" style="display:block;width:calc(100% - 32px);margin:0 16px 18px;padding:13px;border-radius:16px">輸入邀請碼加入 Event</button>
 </div>
@@ -77,19 +77,19 @@ function renderEvents(){
     return;
   }
   list.innerHTML=state.events.slice().reverse().map(e=>{
-    let total=(e.expenses||[]).reduce((a,x)=>a+(Number(x.total)||0),0);
-    return `<div class="card event-card">
-      <div onclick="openEvent(${e.id})" style="cursor:pointer">
-        <div class="headrow">
-          <div style="min-width:0;padding-right:12px">
-            <div class="event-title">${escapeHtml(e.name)}</div>
-            <div class="event-meta">${e.date?escapeHtml(e.date)+' · ':''}${e.members.length} ${tr('eventMembers')} · ${(e.expenses||[]).length} ${tr('eventExpenses')}</div>
-          </div>
-          <div class="event-total">${formatMoney(total,e.currency)}</div>
+    return `<div class="card event-card" onclick="openEvent(${e.id})" style="cursor:pointer">
+      <div class="headrow">
+        <div style="min-width:0;padding-right:12px">
+          <div class="event-title">${escapeHtml(e.name)}</div>
+          <div class="event-meta">${e.date?escapeHtml(e.date)+' · ':''}${e.members.length} ${tr('eventMembers')} · ${(e.expenses||[]).length} ${tr('eventExpenses')}</div>
         </div>
-      </div>
-      <div style="display:flex;justify-content:flex-end;margin-top:12px;padding-top:10px;border-top:1px solid #ddd">
-        <button class="ghost" onclick="openShareSheetForEvent(${e.id})" style="font-weight:650">${lang==='zh'?'分享 Event':'Share event'}</button>
+        <button class="ghost" aria-label="${lang==='zh'?'分享 Event':'Share event'}" title="${lang==='zh'?'分享 Event':'Share event'}" onclick="event.stopPropagation();openShareSheetForEvent(${e.id})" style="width:46px;height:46px;padding:0;border-radius:16px;display:grid;place-items:center;flex:0 0 auto">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 16V3"></path>
+            <path d="M7.5 7.5 12 3l4.5 4.5"></path>
+            <path d="M5 11v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"></path>
+          </svg>
+        </button>
       </div>
     </div>`;
   }).join('');
@@ -366,8 +366,22 @@ function getValidation(c){
 }
 function checkLine(ok,text){return `<div class="checkline ${ok?'ok':'danger'}"><span class="ico">${ok?'✓':'✕'}</span><span>${text}</span></div>`}
 function refreshSaveState(v){let b=$('saveExpenseBtn');b.classList.toggle('save-disabled',!v.ok);b.disabled=!v.ok;$('desc').classList.toggle('field-error',!$('desc').value.trim());$('subtotal').classList.toggle('field-error',mode!=='item'&&num('subtotal')<=0);$('payer').classList.toggle('field-error',!$('payer').value);}
-function preview(matched=false){let c=calc();if(mode==='item')$('subtotal').value=c.sub?c.sub.toFixed(2):'';let txPct=c.sub?c.taxAmt/c.sub*100:0,tpPct=c.sub?c.tipAmt/c.sub*100:0;let note=(matched&&num('paidTotal')>0)?`<div class="calc-note good">✓ ${tr('tipCalculated')}: ${money(c.tipAmt)}</div>`:'';let recon='';if(mode==='item'&&$('receiptTaxTotal').value!==''){let receipt=num('receiptTaxTotal'),diff=c.taxAmt-receipt;if(Math.abs(diff)<=0.01)recon=`<div class="calc-note ok">${tr('taxMatch')}</div>`;else recon=`<div class="calc-note warn">${tr('taxMismatch')} ${money(Math.abs(diff))}</div>`}let detail=mode==='item'?`<br><span class="tiny">Base tax: ${money(c.baseTaxAmt||0)} · Extra tax: ${money(c.extraTaxAmt||0)}</span>`:'';let v=getValidation(c);let checks=`<div class="checklist"><b>${tr('checkTitle')}</b>${checkLine(v.required,tr('checkRequired'))}${mode==='item'?checkLine(v.itemsOk,tr('checkItems'))+($('receiptSubtotal').value!==''?checkLine(v.itemSumOk,tr('checkItemSum')):''):''}${checkLine(v.mathOk,tr('checkMath'))}${checkLine(v.sharesOk,tr('checkShares'))}${mode==='item'&&$('receiptTaxTotal').value!==''?checkLine(v.taxOk,tr('checkTax')):''}${$('paidTotal').value!==''?checkLine(v.paidOk,tr('checkPaid')):''}<div class="calc-note ${v.ok?'good':'warn'}">${v.ok?tr('checkReady'):tr('checkNotReady')}</div></div>`;$('preview').innerHTML=`<b>${tr('total')}: ${money(c.total)}</b><br><span class="tiny">Tax: ${money(c.taxAmt)} (${txPct.toFixed(2)}%) · Tip: ${money(c.tipAmt)} (${tpPct.toFixed(2)}%)</span>${detail}${recon}${note}`+(c.names.length?'<br><br>'+c.shares.map(s=>`${escapeHtml(s.name)}: ${money(s.amount)}`).join('<br>'):'')+checks;refreshSaveState(v)}
-
+function preview(matched=false){
+  let c=calc();
+  if(mode==='item')$('subtotal').value=c.sub?c.sub.toFixed(2):'';
+  let txPct=c.sub?c.taxAmt/c.sub*100:0,tpPct=c.sub?c.tipAmt/c.sub*100:0;
+  let note=(matched&&num('paidTotal')>0)?`<div class="calc-note good">✓ ${tr('tipCalculated')}: ${money(c.tipAmt)}</div>`:'';
+  let recon='';
+  if(mode==='item'&&$('receiptTaxTotal').value!==''){
+    let receipt=num('receiptTaxTotal'),diff=c.taxAmt-receipt;
+    if(Math.abs(diff)<=0.01)recon=`<div class="calc-note ok">${tr('taxMatch')}</div>`;
+    else recon=`<div class="calc-note warn">${tr('taxMismatch')} ${money(Math.abs(diff))}</div>`;
+  }
+  let detail=mode==='item'?`<br><span class="tiny">Base tax: ${money(c.baseTaxAmt||0)} · Extra tax: ${money(c.extraTaxAmt||0)}</span>`:'';
+  let v=getValidation(c);
+  $('preview').innerHTML=`<b>${tr('total')}: ${money(c.total)}</b><br><span class="tiny">Tax: ${money(c.taxAmt)} (${txPct.toFixed(2)}%) · Tip: ${money(c.tipAmt)} (${tpPct.toFixed(2)}%)</span>${detail}${recon}${note}`+(c.names.length?'<br><br>'+c.shares.map(s=>`${escapeHtml(s.name)}: ${money(s.amount)}`).join('<br>'):'');
+  refreshSaveState(v);
+}
 function editExpense(id){let e=currentEvent().expenses.find(x=>x.id===id);if(!e)return;editingId=id;mode=e.mode||'equal';taxMode=e.taxMode||'rate';tipMode=e.tipMode||'rate';$('expenseSheet').style.display='flex';$('expenseSheet').querySelector('.panel').classList.add('editing');buildExpenseForm(e.participants);$('desc').value=e.desc;$('expenseType').value=e.expenseType||'dining';$('subtotal').value=e.subtotal;$('payer').value=e.payer;$('tax').value=taxMode==='amount'?(e.taxAmt??e.tax):(e.tax??0);$('tip').value=tipMode==='amount'?(e.tipAmt??e.tip):(e.tip??0);$('paidTotal').value=e.paidTotal||'';$('baseTaxOverride').value=e.baseTaxOverride??'';$('receiptTaxTotal').value=e.receiptTaxTotal??'';$('receiptSubtotal').value=e.receiptSubtotal??'';$('equalBtn').classList.toggle('on',mode==='equal');$('customBtn').classList.toggle('on',mode==='custom');$('customArea').classList.toggle('hidden',mode!=='custom');$('itemArea').classList.toggle('hidden',mode!=='item');$('itemBtn').classList.toggle('on',mode==='item');if(mode==='item'){itemDraft=JSON.parse(JSON.stringify(e.items||[]));taxRuleDraft=JSON.parse(JSON.stringify(e.taxRules||[])).filter(r=>r.id!=='gst');itemDraft.forEach(x=>{if(x.baseTaxable===undefined)x.baseTaxable=true;if(x.taxes?.includes('gst'))x.taxes=x.taxes.filter(t=>t!=='gst')});renderItems();renderTaxRules()}setChargeMode('tax',taxMode,false);setChargeMode('tip',tipMode,false);if(mode==='custom'){let vals={};(e.baseShares||[]).forEach(x=>vals[x.name]=x.amount);buildCustom(vals)}$('subtotal').readOnly=(mode==='item');$('subtotal').classList.toggle('readonly',mode==='item');$('itemTaxMeta').classList.toggle('hidden',mode!=='item');$('deleteExpenseBtn').style.display='block';updateExpenseLabels();preview()}
 function saveExpense(){let c=calc(),d=$('desc').value.trim(),v=getValidation(c);preview();if(!v.required){alert(tr('invalid'));return}if(mode==='item'&&!v.itemsOk){alert(tr('itemInvalid'));return}if(mode==='custom'){let sum=Object.values(c.base).reduce((a,b)=>a+b,0);if(Math.abs(sum-c.sub)>.02){alert(tr('customMismatch'));return}}if(!v.taxOk){alert(tr('taxMismatchSave'));return}if(!v.paidOk){alert(tr('paidMismatch'));return}if(!v.sharesOk||!v.mathOk){alert(tr('checkNotReady'));return}let record={id:editingId||Date.now(),desc:d,expenseType:currentExpenseType(),items:mode==='item'?itemDraft:null,taxRules:mode==='item'?taxRuleDraft:null,subtotal:c.sub,tax:c.tx,tip:c.tp,taxMode,tipMode,taxAmt:c.taxAmt,tipAmt:c.tipAmt,paidTotal:$('paidTotal').value===''?null:num('paidTotal'),baseTaxOverride:$('baseTaxOverride').value===''?null:num('baseTaxOverride'),receiptTaxTotal:$('receiptTaxTotal').value===''?null:num('receiptTaxTotal'),receiptSubtotal:$('receiptSubtotal').value===''?null:num('receiptSubtotal'),total:c.total,payer:$('payer').value,participants:c.names,shares:c.shares,mode,baseShares:c.names.map(n=>({name:n,amount:c.base[n]||0}))};if(editingId){let idx=currentEvent().expenses.findIndex(x=>x.id===editingId);if(idx>=0)currentEvent().expenses[idx]=record}else currentEvent().expenses.push(record);persist();closeExpense();render()}
 function deleteExpense(){if(!editingId)return;if(!confirm(tr('confirmDelete')))return;currentEvent().expenses=currentEvent().expenses.filter(x=>x.id!==editingId);persist();closeExpense();render()}
