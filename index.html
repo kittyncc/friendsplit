@@ -5,10 +5,10 @@
 <div id="eventsView">
   <div class="top"><h1 data-t="events">Events</h1><button class="pill" onclick="toggleLang()">EN / 中</button></div>
   <div id="eventList"></div>
-  <button class="btn" onclick="openEventSheet()" data-t="newEvent">＋ 新增 Event</button>
+  <button class="btn" onclick="openEventSheet()" data-t="newEvent">＋ 新增 Event</button><button class="ghost" onclick="openJoinSheet()" id="joinEventHomeBtn" style="display:block;margin:0 auto 18px">輸入邀請碼加入 Event</button>
 </div>
 <div id="eventView" class="hidden">
-  <div class="top"><div><button class="backbtn" onclick="backToEvents()">‹ <span data-t="events">Events</span></button><div style="display:flex;align-items:center;gap:8px;margin-top:4px"><h1 id="eventTitle"></h1><button class="ghost" onclick="openEventManage()" id="editEventBtn" style="padding:6px 9px">編輯</button></div><div class="tiny" id="eventDate"></div></div><div style="display:flex;gap:6px"><select id="currencySelect" class="pill" onchange="changeCurrency()" style="padding-right:8px"><option value="CAD">CAD</option><option value="JPY">JPY</option><option value="HKD">HKD</option><option value="USD">USD</option></select><button class="pill" onclick="toggleLang()">EN / 中</button></div></div>
+  <div class="top"><div><button class="backbtn" onclick="backToEvents()">‹ <span data-t="events">Events</span></button><div style="display:flex;align-items:center;gap:8px;margin-top:4px"><h1 id="eventTitle"></h1><button class="ghost" onclick="openEventManage()" id="editEventBtn" style="padding:6px 9px">編輯</button></div><div class="tiny" id="eventDate"></div></div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="pill" onclick="openShareSheet()" id="shareEventBtn">分享</button><select id="currencySelect" class="pill" onchange="changeCurrency()" style="padding-right:8px"><option value="CAD">CAD</option><option value="JPY">JPY</option><option value="HKD">HKD</option><option value="USD">USD</option></select><button class="pill" onclick="toggleLang()">EN / 中</button></div></div>
   <div class="card hero"><small data-t="balance">你的結餘</small><div class="amount" id="net">$0</div><div class="row"><div class="stat"><small data-t="owed">其他人欠你</small><b id="owed">$0</b></div><div class="stat"><small data-t="owe">你欠其他人</small><b id="owe">$0</b></div></div></div>
   <div class="card"><div class="headrow"><b data-t="members">成員</b><button class="ghost" onclick="openMember()" data-t="addMember">＋ 加人</button></div><div class="field" style="margin:12px 0 4px"><label id="meLabel">我係</label><select id="meSelect" onchange="changeMe()"></select></div><div class="people" id="people"></div></div>
   <div class="card" onclick="openSettlementSheet()" style="cursor:pointer"><div class="headrow"><b data-t="settle">最佳清數方案</b><span>›</span></div><div id="settlements" class="tiny" style="margin-top:10px"></div></div>
@@ -16,7 +16,19 @@
   <button class="btn" onclick="openExpense()" data-t="addExpense">＋ 新增支出</button>
 </div></div>
 <div class="sheet" id="eventSheet"><div class="panel"><h2 data-t="newEventTitle">新增 Event</h2><div class="field"><label><span data-t="eventName">Event 名稱</span> <span class="req">*</span></label><input id="eventName" placeholder="Botanist Brunch"></div><div class="field"><label data-t="date">日期</label><input id="eventDateInput" type="date"></div><div class="field"><label data-t="currency">貨幣</label><select id="eventCurrency"><option>CAD</option><option>JPY</option><option>HKD</option><option>USD</option></select></div><div id="eventFormError" class="tiny" style="display:none;color:#c62828;margin-top:8px"></div><div class="actions"><button onclick="closeEventSheet()" data-t="cancel">取消</button><button class="primary" onclick="createFriendSplitEvent()" data-t="create">建立</button></div></div></div>
-<div class="sheet" id="eventManageSheet"><div class="panel">
+<div class="sheet" id="shareSheet"><div class="panel">
+<h2 id="shareTitle">分享 Event</h2>
+<div class="card" style="margin:0"><div class="tiny" id="shareHint">將邀請碼傳俾朋友</div><div id="shareCode" style="font-size:30px;font-weight:800;letter-spacing:4px;margin:10px 0"></div><div class="tiny" id="shareEventSummary"></div></div>
+<div class="actions"><button onclick="copyInviteCode()" id="copyCodeBtn">複製邀請碼</button><button class="primary" onclick="closeShareSheet()" id="shareDoneBtn">完成</button></div>
+<div class="tiny" id="prototypeShareNote" style="margin-top:12px"></div>
+</div></div>
+<div class="sheet" id="joinSheet"><div class="panel">
+<h2 id="joinTitle">加入 Event</h2>
+<div class="field"><label id="joinCodeLabel">邀請碼</label><input id="joinCodeInput" maxlength="8" placeholder="ABC123" style="text-transform:uppercase"></div>
+<div id="joinPreview" class="card hidden" style="margin:12px 0"></div>
+<div class="actions"><button onclick="closeJoinSheet()" id="joinCancelBtn">取消</button><button class="primary" onclick="previewJoinCode()" id="joinPreviewBtn">下一步</button></div>
+<div class="tiny" id="joinPrototypeNote" style="margin-top:12px"></div>
+</div></div><div class="sheet" id="eventManageSheet"><div class="panel">
 <h2 id="eventManageTitle">編輯 Event</h2>
 <div class="field"><label id="eventManageNameLabel">Event 名稱</label><input id="eventManageName"></div>
 <div class="field"><label id="eventManageDateLabel">日期</label><input id="eventManageDate" type="date"></div>
@@ -61,7 +73,7 @@ function renderEvents(){let list=$('eventList');if(!state.events.length){list.in
 function formatMoney(n,c){n=Number(n)||0;try{return new Intl.NumberFormat(lang==='zh'?'zh-HK':'en-CA',{style:'currency',currency:c||'CAD',minimumFractionDigits:c==='JPY'?0:2,maximumFractionDigits:c==='JPY'?0:2}).format(n)}catch{return n.toFixed(2)}}
 function openEvent(id){currentEventId=id;state.currentEventId=id;persist();$('eventsView').classList.add('hidden');$('eventView').classList.remove('hidden');renderEvent()}
 function backToEvents(){currentEventId=null;state.currentEventId=null;persist();$('eventView').classList.add('hidden');$('eventsView').classList.remove('hidden');renderEvents()}
-function renderEvent(){let e=currentEvent();if(!e)return;$('eventTitle').textContent=e.name;$('eventDate').textContent=e.date||'';$('currencySelect').value=e.currency;$('editEventBtn').textContent=lang==='zh'?'編輯':'Edit';
+function renderEvent(){let e=currentEvent();if(!e)return;$('eventTitle').textContent=e.name;$('eventDate').textContent=e.date||'';$('currencySelect').value=e.currency;$('editEventBtn').textContent=lang==='zh'?'編輯':'Edit';$('shareEventBtn').textContent=lang==='zh'?'分享':'Share';
 if(!e.me||!e.members.includes(e.me))e.me=e.members[0]||'';
 $('meLabel').textContent=lang==='zh'?'我係':'I am';
 $('meSelect').innerHTML=e.members.map(n=>`<option value="${escapeAttr(n)}">${escapeHtml(n)}</option>`).join('');
@@ -141,6 +153,54 @@ function createSettlementGroup(){let e=currentEvent();if(!e)return;let picked=[.
 function removeSettlementGroup(i){let e=currentEvent();if(!e)return;e.settlementGroups=e.settlementGroups||[];e.settlementGroups.splice(i,1);persist();renderSettlementSheet()}
 function renderBalances(){let e=currentEvent();if(!e)return;let b=balances(),me=(e.me&&e.members.includes(e.me))?e.me:e.members[0],v=b[me]||0;$('net').textContent=(v>=0?'+ ':'- ')+money(Math.abs(v));$('owed').textContent=money(Math.max(v,0));$('owe').textContent=money(Math.max(-v,0));renderSettlementRows(individualSettlementRows(),$('settlements'))}
 
+
+function ensureInviteCode(e){
+  if(!e.inviteCode){
+    let raw=(Number(e.id)||Date.now()).toString(36).toUpperCase().replace(/[^A-Z0-9]/g,'');
+    e.inviteCode=('FS'+raw.slice(-6)).slice(0,8);persist();
+  }
+  return e.inviteCode;
+}
+function openShareSheet(){
+  let e=currentEvent();if(!e)return;let zh=lang==='zh',code=ensureInviteCode(e);
+  $('shareTitle').textContent=zh?'分享 Event':'Share event';
+  $('shareHint').textContent=zh?'將呢個邀請碼傳俾朋友':'Send this invite code to your friends';
+  $('shareCode').textContent=code;
+  $('shareEventSummary').textContent=`${e.name} · ${e.members.length} ${zh?'位成員':'members'}`;
+  $('copyCodeBtn').textContent=zh?'複製邀請碼':'Copy code';
+  $('shareDoneBtn').textContent=zh?'完成':'Done';
+  $('prototypeShareNote').textContent=zh?'Prototype：呢版先測試 Share / Join 流程。真正跨手機同步會喺下一個 backend milestone 開通。':'Prototype: this version tests the Share / Join flow. Cross-device sync will be enabled with the backend milestone.';
+  $('shareSheet').style.display='flex';
+}
+function closeShareSheet(){$('shareSheet').style.display='none'}
+async function copyInviteCode(){
+  let code=$('shareCode').textContent;
+  try{await navigator.clipboard.writeText(code);$('copyCodeBtn').textContent=lang==='zh'?'已複製 ✓':'Copied ✓'}
+  catch{prompt(lang==='zh'?'複製邀請碼：':'Copy invite code:',code)}
+}
+function openJoinSheet(){
+  let zh=lang==='zh';
+  $('joinTitle').textContent=zh?'加入 Event':'Join event';
+  $('joinCodeLabel').textContent=zh?'邀請碼':'Invite code';
+  $('joinCancelBtn').textContent=zh?'取消':'Cancel';
+  $('joinPreviewBtn').textContent=zh?'下一步':'Next';
+  $('joinPrototypeNote').textContent=zh?'Prototype：暫時只可以預覽同一部裝置上已存在嘅 Event。':'Prototype: for now, you can preview events that already exist on this device.';
+  $('joinCodeInput').value='';$('joinPreview').classList.add('hidden');$('joinPreview').innerHTML='';
+  $('joinSheet').style.display='flex';
+}
+function closeJoinSheet(){$('joinSheet').style.display='none'}
+function previewJoinCode(){
+  let code=$('joinCodeInput').value.trim().toUpperCase(),zh=lang==='zh';
+  let e=(state.events||[]).find(x=>ensureInviteCode(x)===code);
+  if(!e){
+    $('joinPreview').classList.remove('hidden');
+    $('joinPreview').innerHTML=`<b>${zh?'暫時搵唔到呢個 Event':'Event not found yet'}</b><div class="tiny" style="margin-top:6px">${zh?'真正由另一部手機加入，要等下一步 cloud sync。':'Joining from another phone requires the next cloud-sync milestone.'}</div>`;
+    return;
+  }
+  $('joinPreview').classList.remove('hidden');
+  $('joinPreview').innerHTML=`<b>${escapeHtml(e.name)}</b><div class="tiny" style="margin-top:6px">${e.members.length} ${zh?'位成員':'members'} · ${escapeHtml(e.currency||'CAD')}</div><button class="primary" style="width:100%;margin-top:12px;padding:12px;border:0;border-radius:12px" onclick="joinExistingPrototype(${e.id})">${zh?'打開 Event':'Open event'}</button>`;
+}
+function joinExistingPrototype(id){closeJoinSheet();openEvent(id)}
 function openEventManage(){
   let e=currentEvent();if(!e)return;let zh=lang==='zh';
   $('eventManageTitle').textContent=zh?'編輯 Event':'Edit event';
