@@ -10,7 +10,7 @@
 <div id="eventView" class="hidden">
   <div class="top"><div><button class="backbtn" onclick="backToEvents()">‹ <span data-t="events">Events</span></button><h1 id="eventTitle" style="margin-top:4px"></h1><div class="tiny" id="eventDate"></div></div><div style="display:flex;gap:6px"><select id="currencySelect" class="pill" onchange="changeCurrency()" style="padding-right:8px"><option value="CAD">CAD</option><option value="JPY">JPY</option><option value="HKD">HKD</option><option value="USD">USD</option></select><button class="pill" onclick="toggleLang()">EN / 中</button></div></div>
   <div class="card hero"><small data-t="balance">你的結餘</small><div class="amount" id="net">$0</div><div class="row"><div class="stat"><small data-t="owed">其他人欠你</small><b id="owed">$0</b></div><div class="stat"><small data-t="owe">你欠其他人</small><b id="owe">$0</b></div></div></div>
-  <div class="card"><div class="headrow"><b data-t="members">成員</b><button class="ghost" onclick="openMember()" data-t="addMember">＋ 加人</button></div><div class="people" id="people"></div></div>
+  <div class="card"><div class="headrow"><b data-t="members">成員</b><button class="ghost" onclick="openMember()" data-t="addMember">＋ 加人</button></div><div class="field" style="margin:12px 0 4px"><label id="meLabel">我係</label><select id="meSelect" onchange="changeMe()"></select></div><div class="people" id="people"></div></div>
   <div class="card"><b data-t="settle">最佳清數方案</b><div id="settlements" class="tiny" style="margin-top:10px"></div></div>
   <div class="card"><b data-t="recent">最近支出</b><div id="expenses"></div></div>
   <button class="btn" onclick="openExpense()" data-t="addExpense">＋ 新增支出</button>
@@ -50,7 +50,13 @@ function renderEvents(){let list=$('eventList');if(!state.events.length){list.in
 function formatMoney(n,c){n=Number(n)||0;try{return new Intl.NumberFormat(lang==='zh'?'zh-HK':'en-CA',{style:'currency',currency:c||'CAD',minimumFractionDigits:c==='JPY'?0:2,maximumFractionDigits:c==='JPY'?0:2}).format(n)}catch{return n.toFixed(2)}}
 function openEvent(id){currentEventId=id;state.currentEventId=id;persist();$('eventsView').classList.add('hidden');$('eventView').classList.remove('hidden');renderEvent()}
 function backToEvents(){currentEventId=null;state.currentEventId=null;persist();$('eventView').classList.add('hidden');$('eventsView').classList.remove('hidden');renderEvents()}
-function renderEvent(){let e=currentEvent();if(!e)return;$('eventTitle').textContent=e.name;$('eventDate').textContent=e.date||'';$('currencySelect').value=e.currency;$('people').innerHTML=e.members.map(n=>`<button class="avatar" title="${escapeAttr(n)}" onclick="openMemberDetail(decodeURIComponent('${encodeURIComponent(n)}'))">${initials(n)}</button>`).join('');let ex=$('expenses');ex.innerHTML=e.expenses.length?e.expenses.slice().reverse().map(x=>`<div class="expense" onclick="editExpense(${x.id})"><div><b>${escapeHtml(x.desc)}</b><small>${escapeHtml(x.payer)} ${tr('paid')} · ${x.participants.length} ${tr('people')}</small></div><div class="money"><span>${money(x.total)}</span><small>Tax ${money(x.taxAmt ?? x.subtotal*(x.tax||0)/100)} · Tip ${money(x.tipAmt ?? x.subtotal*(x.tip||0)/100)}</small></div></div>`).join(''):`<div class="tiny" style="padding-top:12px">${tr('none')}<br>${tr('editHint')}</div>`;renderBalances()}
+function renderEvent(){let e=currentEvent();if(!e)return;$('eventTitle').textContent=e.name;$('eventDate').textContent=e.date||'';$('currencySelect').value=e.currency;
+if(!e.me||!e.members.includes(e.me))e.me=e.members[0]||'';
+$('meLabel').textContent=lang==='zh'?'我係':'I am';
+$('meSelect').innerHTML=e.members.map(n=>`<option value="${escapeAttr(n)}">${escapeHtml(n)}</option>`).join('');
+$('meSelect').value=e.me||'';
+$('people').innerHTML=e.members.map(n=>`<button class="avatar" style="${n===e.me?'outline:3px solid #111;outline-offset:2px':''}" title="${escapeAttr(n)}" onclick="openMemberDetail(decodeURIComponent('${encodeURIComponent(n)}'))">${initials(n)}</button>`).join('');let ex=$('expenses');ex.innerHTML=e.expenses.length?e.expenses.slice().reverse().map(x=>`<div class="expense" onclick="editExpense(${x.id})"><div><b>${escapeHtml(x.desc)}</b><small>${escapeHtml(x.payer)} ${tr('paid')} · ${x.participants.length} ${tr('people')}</small></div><div class="money"><span>${money(x.total)}</span><small>Tax ${money(x.taxAmt ?? x.subtotal*(x.tax||0)/100)} · Tip ${money(x.tipAmt ?? x.subtotal*(x.tip||0)/100)}</small></div></div>`).join(''):`<div class="tiny" style="padding-top:12px">${tr('none')}<br>${tr('editHint')}</div>`;renderBalances()}
+function changeMe(){let e=currentEvent();if(!e)return;e.me=$('meSelect').value;persist();renderEvent()}
 function balances(){let e=currentEvent();if(!e)return{};let b=Object.fromEntries(e.members.map(m=>[m,0]));e.expenses.forEach(x=>{if(!(x.payer in b))b[x.payer]=0;b[x.payer]+=x.total;x.shares.forEach(sh=>{if(!(sh.name in b))b[sh.name]=0;b[sh.name]-=sh.amount})});return b}
 function openMemberDetail(name){
   let e=currentEvent();if(!e)return;
@@ -76,7 +82,7 @@ function openMemberDetail(name){
   $('memberDetailSheet').style.display='flex';
 }
 function closeMemberDetail(){$('memberDetailSheet').style.display='none'}
-function renderBalances(){let e=currentEvent();if(!e)return;let b=balances(),me=e.members.includes('Kitty')?'Kitty':e.members[0],v=b[me]||0;$('net').textContent=(v>=0?'+ ':'- ')+money(Math.abs(v));$('owed').textContent=money(Math.max(v,0));$('owe').textContent=money(Math.max(-v,0));let debtors=[],creditors=[];Object.entries(b).forEach(([n,x])=>{if(x<-0.005)debtors.push([n,-x]);if(x>0.005)creditors.push([n,x])});let out=[],i=0,j=0;while(i<debtors.length&&j<creditors.length){let amt=Math.min(debtors[i][1],creditors[j][1]);out.push(`${escapeHtml(debtors[i][0])} ${tr('owes')} ${escapeHtml(creditors[j][0])} <b>${money(amt)}</b>`);debtors[i][1]-=amt;creditors[j][1]-=amt;if(debtors[i][1]<.005)i++;if(creditors[j][1]<.005)j++}$('settlements').innerHTML=out.length?out.map(x=>`<div class="balance-line"><span>${x}</span></div>`).join(''):tr('noSettle')}
+function renderBalances(){let e=currentEvent();if(!e)return;let b=balances(),me=(e.me&&e.members.includes(e.me))?e.me:e.members[0],v=b[me]||0;$('net').textContent=(v>=0?'+ ':'- ')+money(Math.abs(v));$('owed').textContent=money(Math.max(v,0));$('owe').textContent=money(Math.max(-v,0));let debtors=[],creditors=[];Object.entries(b).forEach(([n,x])=>{if(x<-0.005)debtors.push([n,-x]);if(x>0.005)creditors.push([n,x])});let out=[],i=0,j=0;while(i<debtors.length&&j<creditors.length){let amt=Math.min(debtors[i][1],creditors[j][1]);out.push(`${escapeHtml(debtors[i][0])} ${tr('owes')} ${escapeHtml(creditors[j][0])} <b>${money(amt)}</b>`);debtors[i][1]-=amt;creditors[j][1]-=amt;if(debtors[i][1]<.005)i++;if(creditors[j][1]<.005)j++}$('settlements').innerHTML=out.length?out.map(x=>`<div class="balance-line"><span>${x}</span></div>`).join(''):tr('noSettle')}
 function changeCurrency(){let e=currentEvent();if(!e)return;e.currency=$('currencySelect').value;persist();renderEvent();preview()}
 function openEventSheet(){
   $('eventName').value='';
@@ -103,6 +109,7 @@ function createFriendSplitEvent(){
       date:dateEl?.value||'',
       currency:currencyEl?.value||'CAD',
       members:['Kitty'],
+      me:'Kitty',
       expenses:[]
     };
     if(!Array.isArray(state.events)) state.events=[];
